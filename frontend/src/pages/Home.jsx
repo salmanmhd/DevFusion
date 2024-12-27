@@ -10,7 +10,7 @@ function Home() {
   const createProject = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("/project", {
+      const res = await axios.post("/projects/create", {
         name: projectName,
       });
       console.log(res);
@@ -26,7 +26,8 @@ function Home() {
           className="project rounded-md border border-slate-300 bg-gray-800 p-4 hover:bg-gray-700"
           onClick={() => setIsModalOpen(true)}
         >
-          <i className="ri-link-m text-white"></i>
+          <span className="mr-2">Create new project</span>
+          <i className="ri-add-circle-fill text-xl"></i>
         </button>
       </div>
 
