@@ -2,6 +2,7 @@ import userModel from '../models/user.model.js';
 import * as userService from '../services/user.service.js';
 import { validationResult } from 'express-validator';
 import redisClient from '../services/redis.service.js';
+import User from '../models/user.model.js';
 
 export const createUserController = async (req, res) => {
   const errors = validationResult(req);
@@ -86,6 +87,26 @@ export const logoutController = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       msg: 'logout failed',
+      error: error.message,
+    });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const loggedinUser = await User.findOne({
+      email: req.user.email,
+    });
+    const allUsers = await userService.getAllUsers({
+      userId: loggedinUser._id,
+    });
+    res.status(200).json({
+      msg: 'all users fetched successfully',
+      allUsers,
+    });
+  } catch (error) {
+    res.status(400).json({
+      msg: 'something went wrong while fetching all the users',
       error: error.message,
     });
   }
