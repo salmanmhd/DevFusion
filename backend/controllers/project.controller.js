@@ -14,7 +14,6 @@ export const createProject = async (req, res) => {
   try {
     const { name } = req.body;
     const loggedinUser = await User.findOne({ email: req.user.email });
-    console.log(loggedinUser, 'email: ', req.user.email);
     const userId = loggedinUser._id;
 
     const newProject = await projectService.createProject({
@@ -72,6 +71,22 @@ export const addUserToProject = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       msg: 'something went wrong while adding user to project',
+      error: error.message,
+    });
+  }
+};
+
+export const getProjectById = async (req, res) => {
+  const { projectId } = req.params;
+
+  try {
+    const project = await projectService.getProjectById({ projectId });
+    res.status(200).json({
+      project,
+    });
+  } catch (error) {
+    res.status(400).json({
+      msg: 'something went wrong while fetching projects by id',
       error: error.message,
     });
   }

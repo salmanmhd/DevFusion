@@ -13,7 +13,6 @@ function Home() {
       const res = await axios.post("/projects/create", {
         name: projectName,
       });
-      console.log(res);
     } catch (error) {
       console.log(error);
     }

@@ -15,7 +15,7 @@ app.use(cookieParser());
 app.use(morgan('dev')); // to log the routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/user', userRouter);
+app.use('/users', userRouter);
 app.use('/projects', projectRouter);
 app.get('/', (req, res) => {
   res.send('Hello World!');
