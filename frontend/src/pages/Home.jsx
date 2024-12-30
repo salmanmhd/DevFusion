@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "../context/user.context";
 import axios from "../config/axios";
+import { useNavigate } from "react-router-dom";
 
 function Home() {
   const { user } = useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const navigate = useNavigate();
+  const [project, setProject] = useState([]);
 
   const createProject = async (e) => {
     e.preventDefault();
@@ -18,9 +21,22 @@ function Home() {
     }
   };
 
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const res = await axios.get("/projects/all");
+        setProject(res.data.projects);
+      } catch (error) {
+        console.log(error.message);
+      }
+    }
+
+    fetchProjects();
+  }, []);
+
   return (
     <main className="min-h-screen bg-gray-900 p-4 text-white">
-      <div className="projects">
+      <div className="projects flex flex-wrap gap-3">
         <button
           className="project rounded-md border border-slate-300 bg-gray-800 p-4 hover:bg-gray-700"
           onClick={() => setIsModalOpen(true)}
@@ -28,6 +44,31 @@ function Home() {
           <span className="mr-2">Create new project</span>
           <i className="ri-add-circle-fill text-xl"></i>
         </button>
+        {project.map((project) => (
+          <div
+            key={project._id}
+            onClick={() => {
+              navigate(`/project`, {
+                state: { project },
+              });
+            }}
+            className="project flex min-w-52 cursor-pointer flex-col gap-2 rounded-md border border-slate-300 p-4 hover:bg-slate-700"
+          >
+            <h2 className="font-semibold">{project.name}</h2>
+
+            <div className="flex gap-2">
+              <p>
+                {" "}
+                <small>
+                  {" "}
+                  <i className="ri-user-line"></i> Collaborators
+                </small>{" "}
+                :
+              </p>
+              {project.users.length}
+            </div>
+          </div>
+        ))}
       </div>
 
       {isModalOpen && (

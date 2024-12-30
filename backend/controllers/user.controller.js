@@ -102,7 +102,7 @@ export const getAllUsers = async (req, res) => {
     });
     res.status(200).json({
       msg: 'all users fetched successfully',
-      allUsers,
+      users: allUsers,
     });
   } catch (error) {
     res.status(400).json({
