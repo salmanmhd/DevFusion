@@ -2,13 +2,15 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../config/axios";
 import InputItems from "../components/InputItems";
-import { useUser } from "../context/user.context";
+import { useUser } from "../context/User.context";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const naviate = useNavigate();
+  const navigate = useNavigate();
   const { setUser } = useUser();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -24,7 +26,8 @@ const Login = () => {
       if (res) {
         localStorage.setItem("token", res.data.token);
         setUser(res.data.user);
-        naviate("/");
+        console.log("user logged in", res.data.user);
+        navigate("/");
       }
     } catch (error) {
       console.log(error.message);

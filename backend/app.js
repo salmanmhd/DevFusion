@@ -17,8 +17,5 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/users', userRouter);
 app.use('/projects', projectRouter);
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
 
 export default app;

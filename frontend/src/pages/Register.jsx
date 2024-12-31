@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import InputItems from "../components/InputItems";
 import axios from "../config/axios";
-import { useUser } from "../context/user.context";
+import { useUser } from "../context/User.context";
 const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

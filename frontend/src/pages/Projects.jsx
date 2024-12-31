@@ -1,14 +1,23 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
+import {
+  initializeSocket,
+  receiveMessage,
+  sendMessage,
+} from "../config/socket";
+import { useUser } from "../context/User.context";
 
-const Project = () => {
+const Projects = () => {
   const location = useLocation();
 
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState(new Set()); // Initialized as Set
+  const [selectedUserId, setSelectedUserId] = useState([]);
   const [project, setProject] = useState(location.state.project);
+  const [message, setMessage] = useState("");
+  const { user } = useUser();
+  const messageBox = React.createRef();
 
   const [users, setUsers] = useState([]);
 
@@ -32,19 +41,38 @@ const Project = () => {
         users: Array.from(selectedUserId),
       })
       .then((res) => {
-        setIsModalOpen(false);
         console.log(res.data);
-        console.log("collaborators added");
+        setIsModalOpen(false);
       })
       .catch((err) => {
         console.log(err);
       });
   }
 
+  const send = () => {
+    sendMessage("project-message", {
+      message,
+      sender: user,
+    });
+
+    appendOutgoingMessage(message);
+
+    setMessage("");
+  };
+
   useEffect(() => {
+    initializeSocket(project._id);
+
+    receiveMessage("project-message", (data) => {
+      console.log(data);
+      appendIncomingMessage(data);
+    });
+
     axios
-      .get(`/projects/get-projects/${location.state.project._id}`)
+      .get(`/projects/get-project/${location.state.project._id}`)
       .then((res) => {
+        console.log(res.data.project);
+
         setProject(res.data.project);
       });
 
@@ -56,12 +84,61 @@ const Project = () => {
       .catch((err) => {
         console.log(err);
       });
-  }, [location.state.project._id]);
+  }, [location.state.project._id, project._id]);
+
+  function appendIncomingMessage(messageObject) {
+    const messageBox = document.querySelector(".message-box");
+
+    const message = document.createElement("div");
+    message.classList.add(
+      "message",
+      "max-w-56",
+      "flex",
+      "flex-col",
+      "p-2",
+      "bg-slate-50",
+      "w-fit",
+      "rounded-md",
+    );
+    message.innerHTML = `
+                <small class='opacity-65 text-xs'>${messageObject.sender.email}</small>
+                <p class='text-sm'>${messageObject.message}</p>
+            `;
+    messageBox.appendChild(message);
+    // scrollToBottom();
+  }
+
+  function appendOutgoingMessage(message) {
+    const messageBox = document.querySelector(".message-box");
+
+    const newMessage = document.createElement("div");
+    newMessage.classList.add(
+      "ml-auto",
+      "max-w-56",
+      "message",
+      "flex",
+      "flex-col",
+      "p-2",
+      "bg-slate-50",
+      "w-fit",
+      "rounded-md",
+    );
+    newMessage.innerHTML = `
+                    <small class='opacity-65 text-xs'>${user.email}</small>
+                    <p class='text-sm'>${message}</p>
+                `;
+    messageBox.appendChild(newMessage);
+    // scrollToBottom();
+  }
+
+  // function scrollToBottom() {
+  //   messageBox.current.scrollTop = messageBox.current.scrollHeight;
+  // }
 
   return (
     <main className="flex h-screen w-screen">
       <section className="left relative flex h-screen min-w-96 flex-col bg-slate-300">
-        <header className="absolute top-0 z-10 flex w-full items-center justify-between bg-slate-100 p-2 px-4">
+        <header className="absolute top-0 flex w-full items-center justify-between bg-slate-100 p-2 px-4">
           <button className="flex gap-2" onClick={() => setIsModalOpen(true)}>
             <i className="ri-add-fill mr-1"></i>
             <p>Add collaborator</p>
@@ -75,24 +152,19 @@ const Project = () => {
         </header>
         <div className="conversation-area relative flex h-full flex-grow flex-col pb-10 pt-14">
           <div
-            // ref={messageBox}
+            ref={messageBox}
             className="message-box scrollbar-hide flex max-h-full flex-grow flex-col gap-1 overflow-auto p-1"
-          >
-            {/* // TODO: MESSAGES */}
-          </div>
+          ></div>
 
           <div className="inputField absolute bottom-0 flex w-full">
             <input
-              // value={message}
-              // onChange={(e) => setMessage(e.target.value)}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               className="flex-grow border-none p-2 px-4 outline-none"
               type="text"
               placeholder="Enter message"
             />
-            <button
-              // onClick={send}
-              className="bg-slate-950 px-5 text-white"
-            >
+            <button onClick={send} className="bg-slate-950 px-5 text-white">
               <i className="ri-send-plane-fill"></i>
             </button>
           </div>
@@ -128,7 +200,6 @@ const Project = () => {
           </div>
         </div>
       </section>
-      {/* right section to be added TODO: */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="relative w-96 max-w-full rounded-md bg-white p-4">
@@ -141,7 +212,7 @@ const Project = () => {
             <div className="users-list mb-16 flex max-h-96 flex-col gap-2 overflow-auto">
               {users.map((user) => (
                 <div
-                  key={user._id}
+                  key={user.id}
                   className={`user cursor-pointer hover:bg-slate-200 ${Array.from(selectedUserId).indexOf(user._id) != -1 ? "bg-slate-200" : ""} flex items-center gap-2 p-2`}
                   onClick={() => handleUserClick(user._id)}
                 >
@@ -165,4 +236,4 @@ const Project = () => {
   );
 };
 
-export default Project;
+export default Projects;

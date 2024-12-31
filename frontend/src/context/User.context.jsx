@@ -12,5 +12,7 @@ export function UserProvider({ children }) {
 }
 
 export function useUser() {
-  return useContext(UserContext);
+  const context = useContext(UserContext);
+  console.log("User data from context:", context.user);
+  return context;
 }
