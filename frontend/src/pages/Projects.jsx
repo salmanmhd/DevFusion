@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import Markdown from "markdown-to-jsx";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
 import {
@@ -8,6 +9,21 @@ import {
 } from "../config/socket";
 import { useUser } from "../context/User.context";
 
+function SyntaxHighlightedCode(props) {
+  const ref = useRef(null);
+
+  React.useEffect(() => {
+    if (ref.current && props.className?.includes("lang-") && window.hljs) {
+      window.hljs.highlightElement(ref.current);
+
+      // hljs won't reprocess the element unless this attribute is removed
+      ref.current.removeAttribute("data-highlighted");
+    }
+  }, [props.className, props.children]);
+
+  return <code {...props} ref={ref} />;
+}
+
 const Projects = () => {
   const location = useLocation();
 
@@ -16,6 +32,7 @@ const Projects = () => {
   const [selectedUserId, setSelectedUserId] = useState([]);
   const [project, setProject] = useState(location.state.project);
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
   const { user } = useUser();
   const messageBox = React.createRef();
 
@@ -55,17 +72,17 @@ const Projects = () => {
       sender: user,
     });
 
-    appendOutgoingMessage(message);
-
+    setMessages((prevMessages) => [...prevMessages, { message, sender: user }]);
     setMessage("");
+    scrollToBottom();
   };
 
   useEffect(() => {
     initializeSocket(project._id);
 
     receiveMessage("project-message", (data) => {
-      console.log(data);
-      appendIncomingMessage(data);
+      setMessages((prevMessages) => [...prevMessages, data]);
+      scrollToBottom();
     });
 
     axios
@@ -85,51 +102,6 @@ const Projects = () => {
         console.log(err);
       });
   }, [location.state.project._id, project._id]);
-
-  function appendIncomingMessage(messageObject) {
-    const messageBox = document.querySelector(".message-box");
-
-    const message = document.createElement("div");
-    message.classList.add(
-      "message",
-      "max-w-56",
-      "flex",
-      "flex-col",
-      "p-2",
-      "bg-slate-50",
-      "w-fit",
-      "rounded-md",
-    );
-    message.innerHTML = `
-                <small class='opacity-65 text-xs'>${messageObject.sender.email}</small>
-                <p class='text-sm'>${messageObject.message}</p>
-            `;
-    messageBox.appendChild(message);
-    scrollToBottom();
-  }
-
-  function appendOutgoingMessage(message) {
-    const messageBox = document.querySelector(".message-box");
-
-    const newMessage = document.createElement("div");
-    newMessage.classList.add(
-      "ml-auto",
-      "max-w-56",
-      "message",
-      "flex",
-      "flex-col",
-      "p-2",
-      "bg-slate-50",
-      "w-fit",
-      "rounded-md",
-    );
-    newMessage.innerHTML = `
-                    <small class='opacity-65 text-xs'>${user.email}</small>
-                    <p class='text-sm'>${message}</p>
-                `;
-    messageBox.appendChild(newMessage);
-    scrollToBottom();
-  }
 
   function scrollToBottom() {
     const messageBox = document.querySelector(".message-box");
@@ -164,7 +136,33 @@ const Projects = () => {
           <div
             ref={messageBox}
             className="message-box scrollbar-hide flex max-h-full flex-grow flex-col gap-1 overflow-auto p-1"
-          ></div>
+          >
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`${msg.sender._id === "ai" ? "max-w-80" : "max-w-54"} ${msg.sender._id == user._id.toString() && "ml-auto"} message flex w-fit flex-col rounded-md bg-slate-50 p-2`}
+              >
+                <small className="text-xs opacity-65">{msg.sender.email}</small>
+                <p className="text-xs">
+                  {msg.sender._id === "ai" ? (
+                    <div className="overflow-auto rounded-sm bg-slate-950 p-2 text-white">
+                      <Markdown
+                        options={{
+                          overrides: {
+                            code: SyntaxHighlightedCode,
+                          },
+                        }}
+                      >
+                        {msg.message}
+                      </Markdown>
+                    </div>
+                  ) : (
+                    msg.message
+                  )}
+                </p>
+              </div>
+            ))}
+          </div>
 
           <div className="inputField absolute bottom-0 flex w-full">
             <input
