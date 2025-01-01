@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import Project from './models/project.model.js';
+import { generateResult } from './services/ai.service.js';
 
 dotenv.config();
 
@@ -55,8 +56,22 @@ io.on('connection', (socket) => {
   console.log(socket.roomId);
   socket.join(socket.roomId);
 
-  socket.on('project-message', (data) => {
-    console.log(data);
+  socket.on('project-message', async (data) => {
+    const message = data.message;
+    const isAIPresent = message.includes('@ai');
+    if (isAIPresent) {
+      const prompt = message.replace('@ai', '');
+      const result = await generateResult(prompt);
+
+      io.to(socket.roomId).emit('project-message', {
+        message: result,
+        sender: {
+          _id: 'ai',
+          email: 'AI',
+        },
+      });
+      return;
+    }
     socket.broadcast.to(socket.roomId).emit('project-message', data);
   });
 
