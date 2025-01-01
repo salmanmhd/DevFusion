@@ -60,13 +60,12 @@ io.on('connection', (socket) => {
     socket.broadcast.to(socket.roomId).emit('project-message', data);
   });
 
-  // Listen for the 'disconnect' event when a user disconnects
   socket.on('disconnect', () => {
     console.log('A user disconnected');
+    socket.leave(socket.roomId);
   });
 });
 
-// Start the server and listen on the specified port
 server.listen(port, () => {
-  console.log(`Server running on port ${port}`); // Log that the server is running
+  console.log(`Server running on port ${port}`);
 });

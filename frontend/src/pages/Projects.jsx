@@ -69,7 +69,7 @@ const Projects = () => {
     });
 
     axios
-      .get(`/projects/get-project/${location.state.project._id}`)
+      .get(`/projects/get-projects/${location.state.project._id}`)
       .then((res) => {
         console.log(res.data.project);
 
@@ -105,7 +105,7 @@ const Projects = () => {
                 <p class='text-sm'>${messageObject.message}</p>
             `;
     messageBox.appendChild(message);
-    // scrollToBottom();
+    scrollToBottom();
   }
 
   function appendOutgoingMessage(message) {
@@ -128,18 +128,28 @@ const Projects = () => {
                     <p class='text-sm'>${message}</p>
                 `;
     messageBox.appendChild(newMessage);
-    // scrollToBottom();
+    scrollToBottom();
   }
 
-  // function scrollToBottom() {
-  //   messageBox.current.scrollTop = messageBox.current.scrollHeight;
-  // }
+  function scrollToBottom() {
+    const messageBox = document.querySelector(".message-box");
+
+    if (!messageBox) {
+      console.error("Message box element not found in scrollToBottom");
+      return; // Stop execution if messageBox is null
+    }
+
+    messageBox.scrollTop = messageBox.scrollHeight;
+  }
 
   return (
     <main className="flex h-screen w-screen">
       <section className="left relative flex h-screen min-w-96 flex-col bg-slate-300">
-        <header className="absolute top-0 flex w-full items-center justify-between bg-slate-100 p-2 px-4">
-          <button className="flex gap-2" onClick={() => setIsModalOpen(true)}>
+        <header className="absolute top-0 z-10 flex w-full items-center justify-between bg-slate-100 p-2 px-4">
+          <button
+            className="flex cursor-pointer gap-2"
+            onClick={() => setIsModalOpen(true)}
+          >
             <i className="ri-add-fill mr-1"></i>
             <p>Add collaborator</p>
           </button>
@@ -159,6 +169,11 @@ const Projects = () => {
           <div className="inputField absolute bottom-0 flex w-full">
             <input
               value={message}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  send();
+                }
+              }}
               onChange={(e) => setMessage(e.target.value)}
               className="flex-grow border-none p-2 px-4 outline-none"
               type="text"
@@ -216,7 +231,7 @@ const Projects = () => {
                   className={`user cursor-pointer hover:bg-slate-200 ${Array.from(selectedUserId).indexOf(user._id) != -1 ? "bg-slate-200" : ""} flex items-center gap-2 p-2`}
                   onClick={() => handleUserClick(user._id)}
                 >
-                  <div className="relative flex aspect-square h-fit w-fit items-center justify-center rounded-full bg-slate-600 p-5 text-white">
+                  <div className="relative flex aspect-square h-fit w-fit items-center justify-center rounded-full bg-slate-900 p-5 text-white">
                     <i className="ri-user-fill absolute"></i>
                   </div>
                   <h1 className="text-lg font-semibold">{user.email}</h1>
@@ -225,7 +240,7 @@ const Projects = () => {
             </div>
             <button
               onClick={addCollaborators}
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 transform rounded-md bg-blue-600 px-4 py-2 text-white"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 transform cursor-pointer rounded-md bg-blue-600 px-4 py-2 text-white"
             >
               Add Collaborators
             </button>
