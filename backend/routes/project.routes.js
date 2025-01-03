@@ -33,4 +33,6 @@ router.get(
   projectController.getProjectById
 );
 
+router.put('/update-file-tree', authUser, projectController.updateFileTree);
+
 export default router;

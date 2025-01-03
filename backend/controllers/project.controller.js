@@ -39,7 +39,7 @@ export const getAllProject = async (req, res) => {
     res.status(200).json({ projects: allUserProjects });
   } catch (error) {
     console.log(error.message);
-    res.status(400).josn({
+    res.status(400).json({
       msg: 'fetching projects failed',
       error: error.message,
     });
@@ -87,6 +87,31 @@ export const getProjectById = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       msg: 'something went wrong while fetching projects by id',
+      error: error.message,
+    });
+  }
+};
+
+export const updateFileTree = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      error: errors.array,
+    });
+  }
+  const { fileTree, projectId } = req.body;
+  try {
+    const updatedProject = await projectService.updateFileTree({
+      projectId,
+      fileTree,
+    });
+    res.status(200).json({
+      msg: 'file tree updated successfully',
+      updatedProject,
+    });
+  } catch (error) {
+    res.status(400).json({
+      msg: 'something went wrong while updating file tree',
       error: error.message,
     });
   }
