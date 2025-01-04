@@ -11,7 +11,6 @@ export const initializeSocket = (projectId) => {
       projectId,
     },
   });
-
   return socketInstance;
 };
 

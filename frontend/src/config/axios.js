@@ -7,8 +7,7 @@ const axiosInstance = axios.create({
 // Add a request interceptor to dynamically set the token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token"); // Fetch the latest token
-    console.log(token);
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

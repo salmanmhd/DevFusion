@@ -14,61 +14,31 @@ const model = genAI.getGenerativeModel({
     <example>
 
     user: create an express server
-    response: {
-  "text": "this is you fileTree structure of the express server",
-  "fileTree": {
-    "app.js": {
-      "file": {
-        "contents": "
-                const express = require('express');
-
-                const app = express();
-
-                app.get('/', (req, res) => {
-                res.send('Hello World!');
-                });
-
-                app.listen(3000, () => {
-                console.log('Server is running on port 3000');
-                });
-                
-                "
+    
+  "response": {
+    "text": "This is express server with the files.",
+    "fileTree": {
+      "app.js": {
+        "file": {
+          "contents": "const express = require('express');\\n\\nconst app = express();\\n\\napp.get('/', (req, res) => {\\n  res.send('Hello World!');\\n});\\n\\napp.listen(3000, () => {\\n  console.log('Server is running on port 3000');\\n});\\n"
+        }
+      },
+      "package.json": {
+        "file": {
+          "contents": "{\\n  \"name\": \"temp-server\",\\n  \"version\": \"1.0.0\",\\n  \"main\": \"index.js\",\\n  \"scripts\": {\\n    \"test\": \"echo \\\"Error: no test specified\\\" && exit 1\"\\n  },\\n  \"keywords\": [],\\n  \"author\": \"\",\\n  \"license\": \"ISC\",\\n  \"description\": \"\",\\n  \"dependencies\": {\\n    \"express\": \"^4.21.2\"\\n  }\\n}\\n"
+        }
       }
     },
-
-    "package.json": {
-      "file": {
-        "contents": "
-        {
-            "name": "temp-server",
-            "version": "1.0.0",
-            "main": "index.js",
-            "scripts": {
-              "test": "echo \"Error: no test specified\" && exit 1"
-            },
-            "keywords": [],
-            "author": "",
-            "license": "ISC",
-            "description": "",
-            "dependencies": {
-              "express": "^4.21.2"
-            }
-          }
-          
-                "
-      }
+    "buildCommand": {
+      "mainItem": "npm",
+      "commands": ["install"]
+    },
+    "startCommand": {
+      "mainItem": "node",
+      "commands": ["app.js"]
     }
-  },
-  "buildCommand": {
-    "mainItem": "npm",
-    "commands": ["install"]
-  },
-
-  "startCommand": {
-    "mainItem": "node",
-    "commands": ["app.js"]
   }
-}
+
 
 
    
@@ -134,6 +104,6 @@ const model = genAI.getGenerativeModel({
 
 export const generateResult = async (prompt) => {
   const result = await model.generateContent(prompt);
-
+  console.log(result.response.text());
   return result.response.text();
 };

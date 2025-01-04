@@ -1,44 +1,29 @@
-// import React, { useState, useEffect, useContext, useRef } from "react";
-// import { UserContext } from "../context/user.context";
-// import { useNavigate, useLocation } from "react-router-dom";
+// import Markdown from "markdown-to-jsx";
+// import { useState, useEffect, useRef, createRef } from "react";
+// import { useLocation } from "react-router-dom";
 // import axios from "../config/axios";
 // import {
 //   initializeSocket,
 //   receiveMessage,
 //   sendMessage,
 // } from "../config/socket";
-// import Markdown from "markdown-to-jsx";
+// import { useUser } from "../context/User.context";
 // import hljs from "highlight.js";
-// import { getWebContainer } from "../config/webcontainer";
+// import { getWebContainer } from "../config/webContainer";
 
-// function SyntaxHighlightedCode(props) {
-//   const ref = useRef(null);
-
-//   React.useEffect(() => {
-//     if (ref.current && props.className?.includes("lang-") && window.hljs) {
-//       window.hljs.highlightElement(ref.current);
-
-//       // hljs won't reprocess the element unless this attribute is removed
-//       ref.current.removeAttribute("data-highlighted");
-//     }
-//   }, [props.className, props.children]);
-
-//   return <code {...props} ref={ref} />;
-// }
-
-// const Project = () => {
+// const Projects = () => {
 //   const location = useLocation();
 
 //   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
 //   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [selectedUserId, setSelectedUserId] = useState(new Set()); // Initialized as Set
+//   const [selectedUserId, setSelectedUserId] = useState(new Set());
 //   const [project, setProject] = useState(location.state.project);
 //   const [message, setMessage] = useState("");
-//   const { user } = useContext(UserContext);
-//   const messageBox = React.createRef();
+//   const { user } = useUser();
+//   const messageBox = createRef();
 
 //   const [users, setUsers] = useState([]);
-//   const [messages, setMessages] = useState([]); // New state variable for messages
+//   const [messages, setMessages] = useState([]);
 //   const [fileTree, setFileTree] = useState({});
 
 //   const [currentFile, setCurrentFile] = useState(null);
@@ -48,6 +33,7 @@
 //   const [iframeUrl, setIframeUrl] = useState(null);
 
 //   const [runProcess, setRunProcess] = useState(null);
+//   const socketRef = useRef(null);
 
 //   const handleUserClick = (id) => {
 //     setSelectedUserId((prevSelectedUserId) => {
@@ -77,34 +63,37 @@
 //       });
 //   }
 
-//   const send = () => {
-//     sendMessage("project-message", {
-//       message,
-//       sender: user,
-//     });
-//     setMessages((prevMessages) => [...prevMessages, { sender: user, message }]); // Update messages state
-//     setMessage("");
-//   };
-
-//   function WriteAiMessage(message) {
+//   function writeAIMessage(message) {
 //     const messageObject = JSON.parse(message);
-
 //     return (
 //       <div className="overflow-auto rounded-sm bg-slate-950 p-2 text-white">
 //         <Markdown
-//           children={messageObject.text}
 //           options={{
 //             overrides: {
 //               code: SyntaxHighlightedCode,
 //             },
 //           }}
-//         />
+//         >
+//           {messageObject.text}
+//           {/* {message} */}
+//         </Markdown>
 //       </div>
 //     );
 //   }
 
+//   const send = () => {
+//     sendMessage("project-message", {
+//       message,
+//       sender: user,
+//     });
+
+//     setMessages((prevMessages) => [...prevMessages, { message, sender: user }]);
+//     setMessage("");
+//     scrollToBottom();
+//   };
+
 //   useEffect(() => {
-//     initializeSocket(project._id);
+//     socketRef.current = initializeSocket(project._id);
 
 //     if (!webContainer) {
 //       getWebContainer().then((container) => {
@@ -114,31 +103,24 @@
 //     }
 
 //     receiveMessage("project-message", (data) => {
-//       console.log(data);
-
+//       console.log("data: ", data);
 //       if (data.sender._id == "ai") {
 //         const message = JSON.parse(data.message);
 
-//         console.log(message);
-
-//         webContainer?.mount(message.fileTree);
+//         webContainer?.mount(message?.fileTree);
 
 //         if (message.fileTree) {
 //           setFileTree(message.fileTree || {});
 //         }
-//         setMessages((prevMessages) => [...prevMessages, data]); // Update messages state
-//       } else {
-//         setMessages((prevMessages) => [...prevMessages, data]); // Update messages state
 //       }
+//       setMessages((prevMessages) => [...prevMessages, data]);
+//       scrollToBottom();
 //     });
 
 //     axios
-//       .get(`/projects/get-project/${location.state.project._id}`)
+//       .get(`/projects/get-projects/${location.state.project._id}`)
 //       .then((res) => {
-//         console.log(res.data.project);
-
 //         setProject(res.data.project);
-//         setFileTree(res.data.project.fileTree || {});
 //       });
 
 //     axios
@@ -149,33 +131,32 @@
 //       .catch((err) => {
 //         console.log(err);
 //       });
-//   }, []);
 
-//   function saveFileTree(ft) {
-//     axios
-//       .put("/projects/update-file-tree", {
-//         projectId: project._id,
-//         fileTree: ft,
-//       })
-//       .then((res) => {
-//         console.log(res.data);
-//       })
-//       .catch((err) => {
-//         console.log(err);
-//       });
-//   }
-
-//   // Removed appendIncomingMessage and appendOutgoingMessage functions
+//     return () => {
+//       console.log("Disconnecting socket...");
+//       socketRef.current.disconnect();
+//     };
+//   }, [location.state.project._id, project._id, message.fileTree, webContainer]);
 
 //   function scrollToBottom() {
-//     messageBox.current.scrollTop = messageBox.current.scrollHeight;
+//     const messageBox = document.querySelector(".message-box");
+
+//     if (!messageBox) {
+//       console.error("Message box element not found in scrollToBottom");
+//       return;
+//     }
+
+//     messageBox.scrollTop = messageBox.scrollHeight;
 //   }
 
 //   return (
 //     <main className="flex h-screen w-screen">
 //       <section className="left relative flex h-screen min-w-96 flex-col bg-slate-300">
 //         <header className="absolute top-0 z-10 flex w-full items-center justify-between bg-slate-100 p-2 px-4">
-//           <button className="flex gap-2" onClick={() => setIsModalOpen(true)}>
+//           <button
+//             className="flex cursor-pointer gap-2"
+//             onClick={() => setIsModalOpen(true)}
+//           >
 //             <i className="ri-add-fill mr-1"></i>
 //             <p>Add collaborator</p>
 //           </button>
@@ -197,13 +178,11 @@
 //                 className={`${msg.sender._id === "ai" ? "max-w-80" : "max-w-52"} ${msg.sender._id == user._id.toString() && "ml-auto"} message flex w-fit flex-col rounded-md bg-slate-50 p-2`}
 //               >
 //                 <small className="text-xs opacity-65">{msg.sender.email}</small>
-//                 <div className="text-sm">
-//                   {msg.sender._id === "ai" ? (
-//                     WriteAiMessage(msg.message)
-//                   ) : (
-//                     <p>{msg.message}</p>
-//                   )}
-//                 </div>
+//                 <p className="text-xs">
+//                   {msg.sender._id === "ai"
+//                     ? writeAIMessage(msg.message)
+//                     : msg.message}
+//                 </p>
 //               </div>
 //             ))}
 //           </div>
@@ -211,6 +190,11 @@
 //           <div className="inputField absolute bottom-0 flex w-full">
 //             <input
 //               value={message}
+//               onKeyDown={(e) => {
+//                 if (e.key === "Enter") {
+//                   send();
+//                 }
+//               }}
 //               onChange={(e) => setMessage(e.target.value)}
 //               className="flex-grow border-none p-2 px-4 outline-none"
 //               type="text"
@@ -252,6 +236,12 @@
 //           </div>
 //         </div>
 //       </section>
+//       <button
+//         onClick={() => localStorage.clear()}
+//         className="absolute right-2 top-7 bg-slate-950 px-5 text-white"
+//       >
+//         clear
+//       </button>
 
 //       <section className="right flex h-full flex-grow bg-red-50">
 //         <div className="explorer h-full min-w-52 max-w-64 bg-slate-200">
@@ -350,7 +340,7 @@
 //                         },
 //                       };
 //                       setFileTree(ft);
-//                       saveFileTree(ft);
+//                       // saveFileTree(ft);
 //                     }}
 //                     dangerouslySetInnerHTML={{
 //                       __html: hljs.highlight(
@@ -384,7 +374,6 @@
 //           </div>
 //         )}
 //       </section>
-
 //       {isModalOpen && (
 //         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
 //           <div className="relative w-96 max-w-full rounded-md bg-white p-4">
@@ -401,7 +390,7 @@
 //                   className={`user cursor-pointer hover:bg-slate-200 ${Array.from(selectedUserId).indexOf(user._id) != -1 ? "bg-slate-200" : ""} flex items-center gap-2 p-2`}
 //                   onClick={() => handleUserClick(user._id)}
 //                 >
-//                   <div className="relative flex aspect-square h-fit w-fit items-center justify-center rounded-full bg-slate-600 p-5 text-white">
+//                   <div className="relative flex aspect-square h-fit w-fit items-center justify-center rounded-full bg-slate-900 p-5 text-white">
 //                     <i className="ri-user-fill absolute"></i>
 //                   </div>
 //                   <h1 className="text-lg font-semibold">{user.email}</h1>
@@ -410,7 +399,7 @@
 //             </div>
 //             <button
 //               onClick={addCollaborators}
-//               className="absolute bottom-4 left-1/2 -translate-x-1/2 transform rounded-md bg-blue-600 px-4 py-2 text-white"
+//               className="absolute bottom-4 left-1/2 -translate-x-1/2 transform cursor-pointer rounded-md bg-blue-600 px-4 py-2 text-white"
 //             >
 //               Add Collaborators
 //             </button>
@@ -421,4 +410,19 @@
 //   );
 // };
 
-// export default Project;
+// function SyntaxHighlightedCode(props) {
+//   const ref = useRef(null);
+
+//   useEffect(() => {
+//     if (ref.current && props.className?.includes("lang-") && window.hljs) {
+//       window.hljs.highlightElement(ref.current);
+
+//       // hljs won't reprocess the element unless this attribute is removed
+//       ref.current.removeAttribute("data-highlighted");
+//     }
+//   }, [props.className, props.children]);
+
+//   return <code {...props} ref={ref} />;
+// }
+
+// export default Projects;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "../config/axios";
 import { useLoaderData, useNavigate } from "react-router-dom";
-import { useUser } from "../context/User.context";
+import { useUser } from "../context/user.context";
 
 function Home() {
   const { user } = useUser();
@@ -9,9 +9,7 @@ function Home() {
   const [projectName, setProjectName] = useState("");
   const navigate = useNavigate();
   const [project, setProject] = useState([]);
-  // const pro = useLoaderData();
-  // console.log(pro);
-  console.log("user: ", user);
+
   const createProject = async (e) => {
     e.preventDefault();
     try {
@@ -26,10 +24,8 @@ function Home() {
   useEffect(() => {
     async function fetchProjects() {
       try {
-        console.log("fetching projects");
         const res = await axios.get("/projects/all");
-        console.log("complete");
-        console.log("projects: ", res.data.projects);
+
         setProject(res.data.projects);
       } catch (error) {
         console.log(error.message);

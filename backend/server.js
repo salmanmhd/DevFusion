@@ -13,7 +13,6 @@ const port = process.env.PORT || 3000;
 
 const server = http.createServer(app);
 
-// Initialize a new instance of Socket.IO and bind it to the server
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -25,6 +24,9 @@ io.use(async (socket, next) => {
     const token =
       socket.handshake.auth?.token ||
       socket.handshake.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return next(new Error('Unauthorized User, no token found'));
+    }
     const projectId = socket.handshake.query.projectId;
     if (!projectId) {
       return next(new Error('Project id not found while connecting to socket'));
@@ -36,9 +38,6 @@ io.use(async (socket, next) => {
 
     socket.project = await Project.findById(projectId);
 
-    if (!token) {
-      return next(new Error('Unauthorized User, no token found'));
-    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded) {
       return next(new Error('Authentication failed'));
@@ -51,9 +50,8 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
+  console.log('A user connected: ', socket.id);
   socket.roomId = socket.project?._id.toString();
-  console.log('A user connected');
-  console.log(socket.roomId);
   socket.join(socket.roomId);
 
   socket.on('project-message', async (data) => {
